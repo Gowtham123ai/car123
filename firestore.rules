@@ -1,0 +1,151 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    // Collection: users
+    //   - name: string (required)
+    //   - email: string (required, email format)
+    //   - phone: string (optional)
+    //   - role: string (required, 'user' or 'admin')
+    //   - loyaltyPoints: number (optional)
+    //   - subscriptionPlan: string (optional)
+    //
+    // Collection: cars
+    //   - name: string (required)
+    //   - brand: string (required)
+    //   - pricePerHour: number (required)
+    //   - pricePerDay: number (required)
+    //   - fuelType: string (optional)
+    //   - seats: number (optional)
+    //   - transmission: string (optional)
+    //   - imageUrl: string (optional)
+    //   - status: string (required, 'available', 'booked', 'maintenance')
+    //   - forSale: bool (optional)
+    //   - salePrice: number (optional)
+    //
+    // Collection: bookings
+    //   - userId: string (required)
+    //   - carId: string (required)
+    //   - startDate: timestamp (required)
+    //   - endDate: timestamp (required)
+    //   - totalPrice: number (required)
+    //   - status: string (required, 'pending', 'confirmed', 'cancelled', 'completed')
+    //   - paymentStatus: string (required, 'pending', 'paid', 'failed')
+    //
+    // Collection: payments
+    //   - userId: string (required)
+    //   - amount: number (required)
+    //   - method: string (required)
+    //   - status: string (required)
+    //   - timestamp: timestamp (required)
+    //
+    // Collection: subscriptions
+    //   - userId: string (required)
+    //   - planName: string (required)
+    //   - usageLimit: number (required)
+    //   - usageUsed: number (required)
+    //   - expiryDate: timestamp (required)
+    //
+    // Collection: coupons
+    //   - code: string (required)
+    //   - discount: number (required)
+    //   - expiryDate: timestamp (required)
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "chgowthaman73@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+    function isValidUser(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.email is string && isValidEmail(data.email) &&
+             data.role in ['user', 'admin'];
+    }
+
+    function isValidCar(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.brand is string && data.brand.size() > 0 && data.brand.size() < 100 &&
+             data.pricePerHour is number && data.pricePerHour >= 0 &&
+             data.pricePerDay is number && data.pricePerDay >= 0 &&
+             data.status in ['available', 'booked', 'maintenance'];
+    }
+
+    function isValidBooking(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.carId is string &&
+             data.startDate is timestamp &&
+             data.endDate is timestamp &&
+             data.totalPrice is number && data.totalPrice >= 0 &&
+             data.status in ['pending', 'confirmed', 'cancelled', 'completed'] &&
+             data.paymentStatus in ['pending', 'paid', 'failed'];
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && isOwner(userId) && isValidUser(request.resource.data) && (request.resource.data.role == 'user' || isAdmin());
+      allow update: if isAuthenticated() && isOwner(userId) && isValidUser(request.resource.data) && (request.resource.data.role == resource.data.role || isAdmin());
+    }
+
+    match /cars/{carId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /bookings/{bookingId} {
+      allow read: if true; // Required for calendar visibility
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    match /payments/{paymentId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated();
+    }
+
+    match /subscriptions/{subscriptionId} {
+      allow read: if true;
+      allow create, update: if isAdmin();
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    match /coupons/{couponId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

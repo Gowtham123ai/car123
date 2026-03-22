@@ -1,0 +1,5 @@
+{
+  "name": "Vel cars - Car Rental",
+  "description": "A full-stack car rental platform with user and admin panels, real-time booking, and subscription plans.",
+  "requestFramePermissions": []
+}

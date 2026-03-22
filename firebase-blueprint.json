@@ -1,0 +1,113 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Full name" },
+        "email": { "type": "string", "format": "email", "description": "Email address" },
+        "phone": { "type": "string", "description": "Phone number" },
+        "role": { "type": "string", "enum": ["user", "admin"], "description": "User role" },
+        "loyaltyPoints": { "type": "integer", "description": "Accumulated loyalty points" },
+        "subscriptionPlan": { "type": "string", "description": "Current subscription plan name" }
+      },
+      "required": ["name", "email", "role"]
+    },
+    "Car": {
+      "title": "Car",
+      "description": "Vehicle details",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Car model name" },
+        "brand": { "type": "string", "description": "Car manufacturer" },
+        "pricePerHour": { "type": "number", "description": "Rental price per hour" },
+        "pricePerDay": { "type": "number", "description": "Rental price per day" },
+        "fuelType": { "type": "string", "description": "Petrol, Diesel, Electric, etc." },
+        "seats": { "type": "integer", "description": "Number of seats" },
+        "transmission": { "type": "string", "description": "Manual, Automatic" },
+        "imageUrl": { "type": "string", "description": "URL to car image" },
+        "status": { "type": "string", "enum": ["available", "booked", "maintenance"], "description": "Current car status" },
+        "forSale": { "type": "boolean", "description": "Whether the car is for sale" },
+        "salePrice": { "type": "number", "description": "Sale price if for sale" }
+      },
+      "required": ["name", "brand", "pricePerHour", "pricePerDay", "status"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "Rental booking record",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "ID of the user who booked" },
+        "carId": { "type": "string", "description": "ID of the booked car" },
+        "startDate": { "type": "string", "format": "date-time", "description": "Rental start time" },
+        "endDate": { "type": "string", "format": "date-time", "description": "Rental end time" },
+        "totalPrice": { "type": "number", "description": "Total calculated price" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "cancelled", "completed"], "description": "Booking status" },
+        "paymentStatus": { "type": "string", "enum": ["pending", "paid", "failed"], "description": "Payment status" }
+      },
+      "required": ["userId", "carId", "startDate", "endDate", "totalPrice", "status", "paymentStatus"]
+    },
+    "Payment": {
+      "title": "Payment",
+      "description": "Payment transaction record",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "ID of the user" },
+        "amount": { "type": "number", "description": "Transaction amount" },
+        "method": { "type": "string", "description": "Payment method (UPI, Card, etc.)" },
+        "status": { "type": "string", "description": "Payment status" },
+        "timestamp": { "type": "string", "format": "date-time", "description": "Time of transaction" },
+        "razorpayOrderId": { "type": "string", "description": "Razorpay order ID" }
+      },
+      "required": ["userId", "amount", "method", "status", "timestamp"]
+    },
+    "Subscription": {
+      "title": "Subscription",
+      "description": "User subscription details",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "ID of the user" },
+        "planName": { "type": "string", "description": "Basic, Premium, Pro" },
+        "usageLimit": { "type": "integer", "description": "Total allowed hours/days" },
+        "usageUsed": { "type": "integer", "description": "Hours/days already used" },
+        "expiryDate": { "type": "string", "format": "date-time", "description": "Subscription expiry date" }
+      },
+      "required": ["userId", "planName", "usageLimit", "usageUsed", "expiryDate"]
+    },
+    "Coupon": {
+      "title": "Coupon",
+      "description": "Discount coupon",
+      "type": "object",
+      "properties": {
+        "code": { "type": "string", "description": "Coupon code" },
+        "discount": { "type": "number", "description": "Discount percentage or amount" },
+        "expiryDate": { "type": "string", "format": "date-time", "description": "Coupon expiry date" }
+      },
+      "required": ["code", "discount", "expiryDate"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "Car review and rating",
+      "type": "object",
+      "properties": {
+        "carId": { "type": "string", "description": "ID of the car" },
+        "userId": { "type": "string", "description": "ID of the user" },
+        "userName": { "type": "string", "description": "Name of the reviewer" },
+        "rating": { "type": "integer", "description": "Rating from 1 to 5" },
+        "comment": { "type": "string", "description": "Review text" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Time of review" }
+      },
+      "required": ["carId", "userId", "userName", "rating", "comment", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": { "schema": "User", "description": "User profiles" },
+    "/cars/{carId}": { "schema": "Car", "description": "Fleet of cars" },
+    "/bookings/{bookingId}": { "schema": "Booking", "description": "Rental bookings" },
+    "/payments/{paymentId}": { "schema": "Payment", "description": "Payment transactions" },
+    "/subscriptions/{subscriptionId}": { "schema": "Subscription", "description": "User subscriptions" },
+    "/coupons/{couponId}": { "schema": "Coupon", "description": "Discount coupons" },
+    "/reviews/{reviewId}": { "schema": "Review", "description": "Car reviews" }
+  }
+}
